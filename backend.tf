@@ -10,5 +10,5 @@ terraform {
 }
 
 provider "aws" {
-  region = var.aws_region   # var.aws_region is still OK here
+  region = var.aws_region # var.aws_region is still OK here
 }
