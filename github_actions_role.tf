@@ -46,6 +46,7 @@ locals {
     "arn:aws:iam::aws:policy/AmazonVPCFullAccess",
     "arn:aws:iam::aws:policy/AmazonSQSFullAccess",
     "arn:aws:iam::aws:policy/AmazonEventBridgeFullAccess",
+    "arn:aws:iam::aws:policy/AmazonDynamoDBFullAccess",
   ]
 }
 
