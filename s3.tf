@@ -1,6 +1,6 @@
 resource "aws_s3_bucket" "tfstate" {
   bucket        = "tfstate-${data.aws_caller_identity.current.account_id}-${var.aws_region}"
-  force_destroy = false                      # keep state files safe
+  force_destroy = false # keep state files safe
 
   # Enable bucket versioning
   versioning {
@@ -17,7 +17,7 @@ resource "aws_s3_bucket" "tfstate" {
   }
 
   lifecycle {
-    prevent_destroy = true                  # extra guard against deletion
+    prevent_destroy = true # extra guard against deletion
   }
 
   tags = {

@@ -1,6 +1,6 @@
 resource "aws_dynamodb_table" "tf_lock" {
   name         = "terraform-state-lock"
-  billing_mode = "PAY_PER_REQUEST"          # no capacity planning
+  billing_mode = "PAY_PER_REQUEST" # no capacity planning
   hash_key     = "LockID"
 
   attribute {
