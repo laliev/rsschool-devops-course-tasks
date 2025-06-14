@@ -1,9 +1,5 @@
-##############################
-# Input variables
-##############################
-
 variable "aws_region" {
-  description = "Default AWS region for provider and S3 backend"
+  description = "AWS region for provider and backend"
   type        = string
   default     = "eu-central-1"
 }
