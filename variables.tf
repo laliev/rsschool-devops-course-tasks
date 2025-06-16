@@ -1,7 +1,7 @@
 variable "aws_region" {
   description = "AWS region for provider and backend"
   type        = string
-  default     = "eu-central-1"
+  default     = "eu-north-1"
 }
 
 variable "github_repository" {
