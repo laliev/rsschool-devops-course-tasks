@@ -1,0 +1,100 @@
+name: Terraform CI/CD
+
+# ────────────────────────
+# 1. Triggers
+# ────────────────────────
+on:
+  pull_request:                      # PRs against any branch
+    paths: ["**.tf", ".github/**"]
+  push:                              # pushes to the default branch
+    branches: [main]
+    paths: ["**.tf", ".github/**"]
+
+# ────────────────────────
+# 2. Required permissions
+#    • id-token  → OIDC to AWS
+#    • contents → checkout code
+# ────────────────────────
+permissions:
+  id-token: write
+  contents: read
+
+# ────────────────────────
+# 3. Re-usable env values
+# ────────────────────────
+env:
+  AWS_REGION: eu-central-1           # match your backend region
+  TF_VERSION: 1.6.6                  # or the version you prefer
+
+# ────────────────────────
+# 4. Jobs
+# ────────────────────────
+jobs:
+
+  # 4-A ─ terraform fmt check
+  terraform-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+      - name: terraform fmt
+        run: terraform fmt -check -recursive
+
+  # 4-B ─ terraform plan
+  terraform-plan:
+    runs-on: ubuntu-latest
+    needs: terraform-check
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_GHA_ROLE_ARN }}   # <- store the role ARN as a repo secret
+          aws-region: ${{ env.AWS_REGION }}
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+
+      - name: terraform init
+        run: terraform init -input=false
+
+      - name: terraform plan
+        run: terraform plan -input=false -out=tfplan
+
+      - name: Upload plan artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: tfplan
+          path: tfplan
+          retention-days: 1
+
+  # 4-C ─ terraform apply  (only on push to main)
+  terraform-apply:
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    needs: terraform-plan
+    environment: production          # add a required-review rule in GitHub if desired
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_GHA_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+
+      - name: Download plan artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: tfplan
+
+      - name: terraform apply
+        run: terraform apply -input=false -auto-approve tfplan
