@@ -1,35 +1,30 @@
-# AWS / Terraform Playground  
 
-A tiny setup for the RS School DevOps course.  
-Everything is managed with **Terraform**, and a GitHub Actions pipeline keeps it up to date.
+- **Public subnets** receive public IPs and host the Bastion and (optionally) NAT gateways.  
+- **Private subnets** have no public IPs; their default route points to the NAT gateway.  
+- **Security Groups & NACLs** restrict traffic to best-practice minimums.
 
 ---
 
-## What it spins up
+## File Layout
 
-| Resource | Why it exists |
-|----------|---------------|
-| **S3 bucket** `tfstate-<account>-eu-central-1` | Stores the Terraform state file (versioned, encrypted) |
-| **DynamoDB table** `terraform-state-lock` | Prevents two people from touching the state at once |
-| **IAM role** `GithubActionsRole` | Used by the CI pipeline—assumed via OIDC, no static keys |
-| **OIDC provider** for `token.actions.githubusercontent.com` | Lets GitHub prove its identity to AWS |
+| File | Purpose |
+|------|---------|
+| `backend.tf` | Remote-state backend (S3 + DynamoDB lock). |
+| `variables.tf` | All input variables with sane defaults. |
+| `network.tf` | VPC, subnets, route tables, IGW, NAT. |
+| `compute.tf` | Bastion host, SSH key pair, security groups. |
+| `github_actions_role.tf` | OIDC provider + IAM role for GitHub Actions. |
+| `.github/workflows/terraform.yml` | CI pipeline (fmt → validate → plan → apply). |
+| `screens/` | Screenshots (`terraform plan`, AWS resource map). |
 
 ---
 
 ## Prerequisites
 
-* Terraform ≥ 1.5  
-* AWS CLI v2 (configured with a user that can create S3 / DynamoDB / IAM stuff)  
-* Git
+| Tool | Minimum version |
+|------|-----------------|
+| Terraform | 1.4 + |
+| AWS CLI   | 2.x |
+| AWS account creds with permission to create VPC, EC2, IAM, S3, DynamoDB |
 
----
-
-## First run
-
-```bash
-git clone https://github.com/laliev/rsschool-devops-course-tasks.git
-cd rsschool-devops-course-tasks
-
-terraform init -reconfigure     # sets up the S3 backend
-terraform plan                  # have a look first
-terraform apply                 # creates everything
+ 
